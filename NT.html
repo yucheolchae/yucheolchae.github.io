@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NT 파라미터 URL 생성기</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --accent-color: #FF7A45;
+      --accent-hover: #E86A2C;
+      --text-color: #333;
+      --bg-light: #ffffff;
+      --input-bg: #F5F5F5;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      background-color: #F0F2F5;
+      color: var(--text-color);
+      padding: 0 1em;
+      margin: 0;
+      min-height: 100vh;
+      background-attachment: fixed;
+    }
+    .container {
+      background: #fff;
+      padding: 2em;
+      margin: 1em auto;
+      width: 100%;
+      max-width: 800px;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    #step1, #step2, #step3 {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+      margin-bottom: 1em;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 1em;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1em;
+      color: #222;
+    }
+    label {
+      display: block;
+      margin-top: 1em;
+      margin-bottom: .3em;
+      font-weight: bold;
+      color: #333;
+    }
+    input {
+      width: 100%;
+      background: var(--input-bg);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75em 1em;
+      color: var(--text-color);
+      font-size: 1em;
+      margin-bottom: 1.25em;
+      transition: background-color 0.2s ease;
+    }
+    input:focus {
+      outline: none;
+      background: #EFEFEF;
+    }
+    button {
+      cursor: pointer;
+    }
+    /* 주요 액션 버튼 */
+    button[type="submit"],
+    #nextBtn,
+    #backBtn {
+      background: var(--accent-color);
+      color: #fff;
+      border: none;
+      padding: 0.75em 1.5em;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+    button[type="submit"]:hover,
+    #nextBtn:hover,
+    #backBtn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+    #actions-step1,
+    #actions {
+      display: flex;
+      gap: .5em;
+      margin-top: 1em;
+      justify-content: flex-end;
+    }
+    #step3 {
+      display: none;
+      margin-top: 1em;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1em;
+    }
+    /* 결과 박스 */
+    #result {
+      margin-bottom: 1.5em;
+      padding: 1em 1.25em;
+      background: #FFF8F3;
+      border: 1px solid var(--accent-color);
+      border-radius: 8px;
+      color: var(--accent-color);
+      font-weight: 600;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+    }
+    /* 복사 버튼 (톤앤매너) */
+    #copyBtn {
+      background: var(--accent-color) !important;
+      color: #fff !important;
+      border: none !important;
+      padding: 0.75em 1.5em !important;
+      border-radius: 8px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: background-color 0.2s ease, transform 0.1s ease !important;
+    }
+    #copyBtn:hover {
+      background: var(--accent-hover) !important;
+      transform: translateY(-2px) !important;
+    }
+    /* 다시 만들기 버튼 */
+    #resetBtn {
+      background: transparent;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      padding: 0.75em 1.5em;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    #resetBtn:hover {
+      background: var(--accent-hover);
+      color: #fff;
+    }
+    /* 전체삭제 버튼 */
+    #clearHistoryBtn {
+      background: transparent;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      padding: 0.75em 1.5em;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    #clearHistoryBtn:hover {
+      background: var(--accent-hover);
+      color: #fff;
+    }
+    /* 저장된 URL */
+    #history-container {
+      margin-top: 2em;
+      background: var(--bg-light);
+      padding: 1.5em;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    #history-container h2 {
+      margin-top: 0;
+      font-size: 1.2em;
+    }
+    #history-list li {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5em 0;
+      border-bottom: 1px solid #eee;
+      gap: 0.5em;
+      margin-bottom: .5em;
+    }
+    #history-list li span {
+      flex: 1;
+      word-break: break-all;
+      margin-right: 1em;
+      color: var(--text-color);
+      overflow-wrap: anywhere;
+    }
+    #history-list li a {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+    #history-list li a:hover {
+      text-decoration: underline;
+    }
+    #history-list li button {
+      background: transparent;
+      color: #e00;
+      border: none;
+      cursor: pointer;
+      padding: 0.2em 0.4em;
+      font-size: 0.9em;
+    }
+    #history-list li button:hover {
+      color: #c00;
+    }
+    #history-list li:last-child {
+      border-bottom: none;
+    }
+    #history-list button {
+      background: transparent;
+      color: var(--accent-color);
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    input:invalid { border-color: #e00; }
+    input:valid { border-color: #0a0; }
+    @media screen and (max-width: 600px) {
+      .container { margin:1em; padding:1em; }
+      form { padding:1em; }
+      #step1,#step2,#step3 { padding:1em; }
+      input { padding:0.6em 0.8em; margin-bottom:1em; }
+      button[type="submit"],#copyBtn,#nextBtn,#backBtn,#resetBtn { width:100%; padding:0.75em; margin-top:0.5em; }
+      #actions-step1,#actions { flex-direction:column; gap:0.5em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>스마스토어 NT 파라미터 링크 생성기</h1>Ver.1.0.0 제작: 채유철</h1>
+    <form id="ntForm">
+      <div id="step1">
+        <label for="urlLabel">링크 이름</label>
+        <input type="text" id="urlLabel" placeholder="예: 메타00소구링크" required />
+        <div id="actions-step1">
+          <button type="button" id="nextBtn" disabled>다음</button>
+        </div>
+      </div>
+      <div id="step2" style="display:none;">
+        <label for="baseUrl">기본 URL</label>
+        <input type="url" id="baseUrl" placeholder="https://smartstore.naver.com/OOO/products/XXX" required />
+        <label for="nt_source">nt_source (필수)</label>
+        <input type="text" id="nt_source" placeholder="영문만 입력" required />
+        <label for="nt_medium">nt_medium (필수)</label>
+        <input type="text" id="nt_medium" placeholder="영문만 입력" required />
+        <label for="nt_detail">nt_detail (선택)</label>
+        <input type="text" id="nt_detail" placeholder="소구점" />
+        <label for="nt_keyword">nt_keyword (선택)</label>
+        <input type="text" id="nt_keyword" placeholder="프로모션이벤트" />
+        <div id="actions">
+          <button type="button" id="backBtn">이전</button>
+          <button type="submit" id="generateBtn" disabled>URL 생성</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="step3" style="display:none;">
+      <div id="result"></div>
+      <button type="button" id="copyBtn">복사</button>
+      <button type="button" id="resetBtn">다시 만들기</button>
+    </div>
+
+    <div id="history-container">
+      <h2>저장된 URL</h2>
+      <button type="button" id="clearHistoryBtn">전체삭제</button>
+      <ul id="history-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('ntForm');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const nextBtn = document.getElementById('nextBtn');
+    const backBtn = document.getElementById('backBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const resultEl = document.getElementById('result');
+    const step3 = document.getElementById('step3');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const ntSourceInput = document.getElementById('nt_source');
+    const ntMediumInput = document.getElementById('nt_medium');
+    [ntSourceInput, ntMediumInput].forEach(input => {
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/[^A-Za-z]/g, '');
+      });
+    });
+
+    let history = JSON.parse(localStorage.getItem('ntHistory') || '[]');
+    const historyListEl = document.getElementById('history-list');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    function renderHistory() {
+      historyListEl.innerHTML = '';
+      history.forEach((item, idx) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span><strong>${item.label}</strong>: <a href="${item.url}" target="_blank">${item.url}</a></span>
+                        <button data-idx="${idx}">삭제</button>`;
+        historyListEl.appendChild(li);
+      });
+    }
+    historyListEl.addEventListener('click', e => {
+      if (e.target.tagName === 'BUTTON') {
+        history.splice(e.target.dataset.idx, 1);
+        localStorage.setItem('ntHistory', JSON.stringify(history));
+        renderHistory();
+      }
+    });
+    clearHistoryBtn.addEventListener('click', () => {
+      if (confirm('저장된 URL을 모두 삭제하시겠습니까?')) {
+        history = [];
+        localStorage.removeItem('ntHistory');
+        renderHistory();
+      }
+    });
+    renderHistory();
+
+    document.getElementById('urlLabel').addEventListener('input', () => {
+      nextBtn.disabled = !document.getElementById('urlLabel').checkValidity();
+    });
+    nextBtn.addEventListener('click', () => {
+      const labelInput = document.getElementById('urlLabel');
+      if (!labelInput.checkValidity()) {
+        labelInput.reportValidity();
+        return;
+      }
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+      generateBtn.disabled = !form.checkValidity();
+    });
+    backBtn.addEventListener('click', () => {
+      step2.style.display = 'none';
+      step1.style.display = 'block';
+    });
+    form.addEventListener('input', () => {
+      generateBtn.disabled = !form.checkValidity();
+    });
+
+    // 1단계: 링크 이름 입력 필드에서 Enter 키로 다음 스텝 이동
+    const urlLabelInput = document.getElementById('urlLabel');
+    urlLabelInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!nextBtn.disabled) nextBtn.click();
+      }
+    });
+
+    // 2단계: step2 전체 영역에서 Enter 키로 URL 생성
+    step2.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!generateBtn.disabled) generateBtn.click();
+      }
+    });
+
+    form.addEventListener('submit', e => {
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      e.preventDefault();
+      const label = document.getElementById('urlLabel').value.trim();
+      let url;
+      try {
+        url = new URL(document.getElementById('baseUrl').value.trim());
+      } catch {
+        resultEl.textContent = '⚠️ 유효한 URL을 입력해주세요.';
+        return;
+      }
+      ['nt_source','nt_medium'].forEach(key => {
+        url.searchParams.set(key, document.getElementById(key).value.trim());
+      });
+      ['nt_detail','nt_keyword'].forEach(key => {
+        const v = document.getElementById(key).value.trim();
+        if (v) url.searchParams.set(key, v);
+      });
+
+      const finalUrl = url.toString();
+      resultEl.textContent = finalUrl;
+      step2.style.display = 'none';
+      step3.style.display = 'block';
+
+      if (!history.some(item => item.url === finalUrl)) {
+        history.unshift({ label, url: finalUrl });
+        localStorage.setItem('ntHistory', JSON.stringify(history));
+        renderHistory();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      form.reset();
+      step3.style.display = 'none';
+      step1.style.display = 'block';
+      nextBtn.disabled = true;
+      generateBtn.disabled = true;
+    });
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(resultEl.textContent || '')
+        .then(() => {
+          copyBtn.textContent = '복사됨!';
+          setTimeout(() => copyBtn.textContent = '복사', 2000);
+        })
+        .catch(() => alert('복사 실패'));
+    });
+  </script>
+</body>
+</html>
